@@ -7,6 +7,18 @@ actor BankAccount {
         balance += amount
         return balance
     }
+    
+    // nonisolatedをつけた場合、外から見た場合と同じようにawaitが必要となる
+    nonisolated func deposit2(_ amount: Int) {
+        Task {
+            await deposit(amount)
+        }
+    }
+    
+    func getInterest(with rate: Double) -> Int {  // 残高を増やす
+        deposit(Int(Double(balance) * rate))
+    }
+    
 }
 
 func bankAccountMain() {
@@ -14,11 +26,10 @@ func bankAccountMain() {
     let account: BankAccount = .init()
 
     Task {
-        print(await account.deposit(100))
-    }
-
-    Task {
-        print(await account.deposit(100))
+        // Task内では順番は保証されている
+        _ = await account.deposit(100)  // 100
+        print(await account.deposit(100))  // 200
+        print(await account.getInterest(with: 0.05))  // 210
     }
 }
 
